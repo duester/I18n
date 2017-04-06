@@ -17,6 +17,11 @@
 	</natures>
 	<linkedResources>
 		<link>
+			<name>src/resource/ordinals.json</name>
+			<type>1</type>
+			<location>D:/git/cldr-core/supplemental/ordinals.json</location>
+		</link>
+		<link>
 			<name>src/resource/plurals.json</name>
 			<type>1</type>
 			<location>D:/git/cldr-core/supplemental/plurals.json</location>
