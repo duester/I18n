@@ -2,8 +2,14 @@ package ru.duester.i18n.plural
 
 import ru.duester.i18n.plural.category._
 
-trait Language[Cat <: PluralCategory] {
-
+trait Language {
+  type Category <: PluralCategory
 }
 
-object DEFAULT extends Language[OTHER]
+object Language {
+  type Aux[C <: PluralCategory] = Language { type Category = C }
+}
+
+class Root extends Language {
+  type Category <: OTHER
+}
