@@ -3,13 +3,18 @@ package ru.duester.i18n.plural
 import ru.duester.i18n.plural.category._
 
 trait Language {
-  type Category <: PluralCategory
+  type Category <: Other
+  type Parent <: Language
 }
 
-object Language {
-  type Aux[C <: PluralCategory] = Language { type Category = C }
+trait DefaultLanguageCategory {
+  type Category = Other
 }
+trait DefaultLanguageParent {
+  type Parent = Root
+}
+trait DefaultLanguageParameters extends DefaultLanguageCategory with DefaultLanguageParent
 
-class Root extends Language {
-  type Category <: OTHER
+class Root extends Language with DefaultLanguageCategory {
+  type Parent = Nothing
 }

@@ -1,9 +1,19 @@
 package ru.duester.i18n.plural.category
 
-sealed trait PluralCategory
-case class ZERO() extends PluralCategory
-case class ONE() extends PluralCategory
-case class TWO() extends PluralCategory
-case class FEW() extends PluralCategory
-case class MANY() extends PluralCategory
-case class OTHER() extends PluralCategory
+sealed trait PluralCategory {
+  type Next <: PluralCategory
+}
+
+trait DefaultNextCategory {
+  type Next = Other
+}
+
+case class Exact(val number : Double) extends PluralCategory
+case class Zero() extends PluralCategory with DefaultNextCategory
+case class One() extends PluralCategory with DefaultNextCategory
+case class Two() extends PluralCategory with DefaultNextCategory
+case class Few() extends PluralCategory with DefaultNextCategory
+case class Many() extends PluralCategory with DefaultNextCategory
+case class Other() extends PluralCategory {
+  type Next = Nothing
+}

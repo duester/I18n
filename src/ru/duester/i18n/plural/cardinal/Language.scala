@@ -1,8 +1,9 @@
 package ru.duester.i18n.plural.cardinal
 
-import ru.duester.i18n.plural.Root
+import ru.duester.i18n.plural._
 import ru.duester.i18n.plural.category._
 
-class Ru extends Root {
-  type Category = ONE with FEW with MANY with OTHER
+class En extends Language with DefaultLanguageParameters
+class Ru extends Language with DefaultLanguageParent {
+  type Category = One with Few with Many with Other
 }
