@@ -22,7 +22,7 @@ object Test {
         list
       }
       else {
-        val parentTypeSymbol = aType.info.member(TypeName("Parent")).asType.info.typeSymbol
+        val parentTypeSymbol = aType.info.member(TypeName("Next")).info.typeSymbol
         getParentTypesInternal(parentTypeSymbol, list :+ aType)
       }
     }

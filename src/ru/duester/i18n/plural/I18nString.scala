@@ -5,12 +5,22 @@ import scala.reflect.runtime.universe._
 import ru.duester.i18n.plural.category._
 
 // map: Language => (PluralCategory => String)
-class I18nString private[plural] (private[plural] val map : Map[TypeSymbol, Map[TypeSymbol, String]]) {
+class I18nString private[plural] (private[plural] val map : Map[Symbol, Map[Symbol, String]]) {
   type Lang <: Language
 
   def withCategory[L >: Lang <: Language, C >: L#Category <: PluralCategory](implicit lTag : TypeTag[L], cTag : TypeTag[C]) : Option[String] = {
-    //lTag.tpe.typeSymbol.
-    ???
+    val lTypeSymbols = getParentTypeSymbols[L]
+    val texts = for {
+      lTypeSymbol <- lTypeSymbols
+      if map.contains(lTypeSymbol)
+      cMap <- map.get(lTypeSymbol).toList
+      cTypeSymbols = getParentTypeSymbols[C]
+      cTypeSymbol <- cTypeSymbols
+      if cMap.contains(cTypeSymbol)
+      text <- cMap.get(cTypeSymbol).toList
+    } yield text
+    println(s"texts: $texts")
+    texts.headOption
   }
 
   /*def |(i18n : I18nString[_]) = ???
@@ -33,7 +43,7 @@ object I18nString {
   def apply[L <: Language](text : String)(implicit lTag : TypeTag[L], cTag : TypeTag[Other]) : Aux[L] = withCategory[L, Other](text)
 
   def withCategory[L <: Language, C >: L#Category <: PluralCategory](text : String)(implicit lTag : TypeTag[L], cTag : TypeTag[C]) : Aux[L] = {
-    val map : Map[TypeSymbol, Map[TypeSymbol, String]] = Map(typeOf[L].typeSymbol.asType -> Map(typeOf[C].typeSymbol.asType -> text))
+    val map : Map[Symbol, Map[Symbol, String]] = Map(typeOf[L].typeSymbol -> Map(typeOf[C].typeSymbol -> text))
     new I18nString(map) {
       type Lang = L
     }
