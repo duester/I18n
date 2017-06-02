@@ -5,6 +5,8 @@ import ru.duester.i18n.plural.category._
 trait Language {
   type Category <: Other
   type Next <: Language
+
+  override def toString() : String = super.getClass.getSimpleName
 }
 
 trait DefaultLanguageCategory {

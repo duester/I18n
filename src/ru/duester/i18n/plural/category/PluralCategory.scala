@@ -2,6 +2,8 @@ package ru.duester.i18n.plural.category
 
 sealed trait PluralCategory {
   type Next <: PluralCategory
+
+  override def toString : String = super.getClass.getSimpleName
 }
 
 trait DefaultNextCategory {
