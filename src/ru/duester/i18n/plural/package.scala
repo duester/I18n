@@ -4,7 +4,7 @@ import ru.duester.i18n.plural.cardinal._
 
 package ru.duester.i18n {
   package object plural {
-    def getParentTypeSymbols[T](implicit tag : TypeTag[T]) : List[Symbol] = {
+    def getParentTypeSymbols[T : TypeTag] : List[Symbol] = {
       @tailrec
       def getParentTypesInternal(aType : Symbol, list : List[Symbol]) : List[Symbol] = {
         if (aType == typeOf[Nothing].typeSymbol) {
@@ -16,7 +16,7 @@ package ru.duester.i18n {
         }
       }
 
-      val aType = tag.tpe.typeSymbol
+      val aType = implicitly[TypeTag[T]].tpe.typeSymbol
       getParentTypesInternal(aType, Nil)
     }
 
