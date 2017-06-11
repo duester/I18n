@@ -1,25 +1,7 @@
-import scala.annotation.tailrec
-import scala.reflect.runtime.universe._
 import ru.duester.i18n.plural.cardinal._
 
 package ru.duester.i18n {
   package object plural {
-    def getParentTypeSymbols[T : TypeTag] : List[Symbol] = {
-      @tailrec
-      def getParentTypesInternal(aType : Symbol, list : List[Symbol]) : List[Symbol] = {
-        if (aType == typeOf[Nothing].typeSymbol) {
-          list
-        }
-        else {
-          val parentTypeSymbol = aType.info.member(TypeName("Next")).info.typeSymbol
-          getParentTypesInternal(parentTypeSymbol, list :+ aType)
-        }
-      }
-
-      val aType = implicitly[TypeTag[T]].tpe.typeSymbol
-      getParentTypesInternal(aType, Nil)
-    }
-
-    //implicit def convertI18nString[]
+    type I18nLanguages = Root with En with Ru
   }
 }

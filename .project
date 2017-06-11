@@ -15,16 +15,4 @@
 		<nature>org.scala-ide.sdt.core.scalanature</nature>
 		<nature>org.eclipse.jdt.core.javanature</nature>
 	</natures>
-	<linkedResources>
-		<link>
-			<name>src/resource/ordinals.json</name>
-			<type>1</type>
-			<location>D:/git/cldr-core/supplemental/ordinals.json</location>
-		</link>
-		<link>
-			<name>src/resource/plurals.json</name>
-			<type>1</type>
-			<location>D:/git/cldr-core/supplemental/plurals.json</location>
-		</link>
-	</linkedResources>
 </projectDescription>

@@ -3,13 +3,48 @@ package ru.duester.i18n.plural
 import scala.annotation.tailrec
 import scala.reflect.runtime.universe._
 
+import ru.duester.i18n.plural._
 import ru.duester.i18n.plural.category._
-import ru.duester.i18n.plural.typetag.TypeTagged
-import ru.duester.i18n.plural.typetag.TypeTaggedTrait
+import ru.duester.i18n.plural.typetag._
 
 // map: Language => (PluralCategory => String)
-class I18nString[Lang <: Language : TypeTag] private[plural] (val map : Map[Symbol, Map[Symbol, String]]) extends TypeTagged[I18nString[Lang]] {
-  def apply[L >: Lang <: Language : TypeTag] : Option[String] = apply[L, Other]
+class I18nString[Lang <: Language : TypeTag] private[plural] (private val map : Map[Symbol, Map[Symbol, String]]) extends TypeTagged[I18nString[Lang]] {
+  def apply[L >: Lang <: Language : TypeTag : PluralCategoryToTypeTag](number : Double, parameters : Any*) : Option[String] = {
+    val categoryTag = implicitly[PluralCategoryToTypeTag[L]]
+
+    val baseStringOpt = extract[L](categoryTag.category(number))
+    baseStringOpt match {
+      case None => None
+      case Some(baseString) =>
+        val unpackedParametersOpt = parameters.map {
+          case t : TypeTaggedTrait[_] => t.cast[I18nString[L]].flatMap { _.extract[L](categoryTag.category(number)) }
+          case p @ _                  => Option(p)
+        }
+        if (unpackedParametersOpt.contains(None)) {
+          None
+        }
+        else {
+          Some(baseString.format(unpackedParametersOpt.map { _.get } : _*))
+        }
+    }
+  }
+
+  private def extract[L >: Lang <: Language : TypeTag](categoryTag : TypeTag[_]) : Option[String] = {
+    val x = implicitly[TypeTag[L]]
+    val lTypeSymbols = getParentTypeSymbols(implicitly[TypeTag[L]])
+    val texts = for {
+      lTypeSymbol <- lTypeSymbols
+      if map.contains(lTypeSymbol)
+      cMap <- map.get(lTypeSymbol).toList
+      cTypeSymbols = getParentTypeSymbols(categoryTag)
+      cTypeSymbol <- cTypeSymbols
+      if cMap.contains(cTypeSymbol)
+      text <- cMap.get(cTypeSymbol).toList
+    } yield text
+    texts.headOption
+  }
+
+  /*def apply[L >: Lang <: Language : TypeTag] : Option[String] = apply[L, Other]
 
   def apply[L >: Lang <: Language : TypeTag, C >: L#Category <: PluralCategory : TypeTag] : Option[String] = {
     val lTypeSymbols = getParentTypeSymbols[L]
@@ -43,6 +78,22 @@ class I18nString[Lang <: Language : TypeTag] private[plural] (val map : Map[Symb
           Some(baseString.format(unpackedParametersOpt.map { _.get } : _*))
         }
     }
+  }*/
+
+  def getParentTypeSymbols[T](tag : TypeTag[T]) : List[Symbol] = {
+    @tailrec
+    def getParentTypesInternal(aType : Symbol, list : List[Symbol]) : List[Symbol] = {
+      if (aType == typeOf[Nothing].typeSymbol) {
+        list
+      }
+      else {
+        val parentTypeSymbol = aType.info.member(TypeName("Next")).info.typeSymbol
+        getParentTypesInternal(parentTypeSymbol, list :+ aType)
+      }
+    }
+
+    val aType = tag.tpe.typeSymbol
+    getParentTypesInternal(aType, Nil)
   }
 
   def |[OtherLang <: Language : TypeTag](otherI18 : I18nString[OtherLang]) : I18nString[Lang with OtherLang] = {
