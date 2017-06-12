@@ -5,33 +5,28 @@ import scala.reflect.runtime.universe._
 import ru.duester.i18n.plural.category._
 
 trait Language {
-  type Category <: Other
-  type Next <: Language
+  type Category <: Other.type
 
+  val next : Language
+  final def category(number : Double) : Exact = categoryNonNeg(math.abs(number))
+  protected def categoryNonNeg(number : Double) : Exact
   override def toString() : String = super.getClass.getSimpleName
 }
 
 trait DefaultLanguageCategory {
-  type Category = Other
+  type Category = Other.type
 }
 
-trait DefaultLanguageParent {
-  type Next = Root
+trait DefaultLanguageParent { self : Language =>
+  val next : Language = Root
 }
 
-trait DefaultLanguageParameters extends DefaultLanguageCategory with DefaultLanguageParent
-
-trait PluralCategoryToTypeTag[L <: Language] {
-  final def category[C >: L#Category <: PluralCategory](number : Double) : TypeTag[C] = categoryNonNeg(math.abs(number))
-  protected def categoryNonNeg[C >: L#Category <: PluralCategory](number : Double) : TypeTag[C]
+trait DefaultLanguageParameters extends DefaultLanguageCategory with DefaultLanguageParent { self : Language =>
 }
 
-class Root extends Language with DefaultLanguageCategory {
-  type Next = Nothing
-}
-
-object Root {
-  implicit object PluralCategoryToTypeTagRoot extends PluralCategoryToTypeTag[Root] {
-    protected def categoryNonNeg[C >: Root#Category <: PluralCategory](number : Double) : TypeTag[C] = typeTag[Other].asInstanceOf[TypeTag[C]]
+case object Root extends Language with DefaultLanguageCategory {
+  val next : Language = Root
+  protected def categoryNonNeg(number : Double) : Exact = new Exact(number) {
+    val next : PluralCategory = Other
   }
 }
