@@ -1,20 +1,19 @@
 package ru.duester.i18n.plural
 
-import scala.reflect.runtime.universe._
-
 import ru.duester.i18n.plural.category._
+import shapeless._
 
 trait Language {
-  type Category <: Other.type
+  type Categories <: HList
 
   val next : Language
   final def category(number : Double) : Exact = categoryNonNeg(math.abs(number))
   protected def categoryNonNeg(number : Double) : Exact
-  override def toString() : String = super.getClass.getSimpleName
+  override def toString() : String = getClass.getSimpleName.toLowerCase()
 }
 
 trait DefaultLanguageCategory {
-  type Category = Other.type
+  type Categories = Other.type :: HNil
 }
 
 trait DefaultLanguageParent { self : Language =>
@@ -26,7 +25,5 @@ trait DefaultLanguageParameters extends DefaultLanguageCategory with DefaultLang
 
 case object Root extends Language with DefaultLanguageCategory {
   val next : Language = Root
-  protected def categoryNonNeg(number : Double) : Exact = new Exact(number) {
-    val next : PluralCategory = Other
-  }
+  protected def categoryNonNeg(number : Double) : Exact = new Exact(number)
 }

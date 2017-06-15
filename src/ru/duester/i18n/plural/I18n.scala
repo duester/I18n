@@ -4,9 +4,10 @@ import scala.annotation.tailrec
 
 import ru.duester.i18n.plural._
 import ru.duester.i18n.plural.category._
+import shapeless.ops.hlist._
 
 // map: Language => (PluralCategory => String)
-class I18nString[Lang <: Language] private[plural] (private val map : Map[Language, Map[PluralCategory, String]]) {
+class I18n[Lang <: Language] private[plural] (private val map : Map[Language, Map[PluralCategory, String]]) {
   def apply[L >: Lang <: Language](language : L)(number : Double, parameters : Any*) : Option[String] = {
     val exactCategory = language.category(number)
 
@@ -15,7 +16,7 @@ class I18nString[Lang <: Language] private[plural] (private val map : Map[Langua
       case None => None
       case Some(baseString) =>
         val unpackedParametersOpt = parameters.map {
-          case i18 : I18nString[_] => i18.extract(language, exactCategory)
+          case i18 : I18n[_] => i18.extract(language, exactCategory)
           case p @ _               => Option(p)
         }
         if (unpackedParametersOpt.contains(None)) {
@@ -28,8 +29,8 @@ class I18nString[Lang <: Language] private[plural] (private val map : Map[Langua
   }
 
   private def extract[L >: Lang <: Language](language : L, exactCategory : Exact) : Option[String] = {
-    val lList = languageList(language)
-    val cList = categoryList(exactCategory)
+    val lList = parentList[Language](language, Root)
+    val cList = parentList[PluralCategory](exactCategory, Other)
     val texts = for {
       cItem <- cList
       lItem <- lList
@@ -41,37 +42,22 @@ class I18nString[Lang <: Language] private[plural] (private val map : Map[Langua
     texts.headOption
   }
 
-  def languageList(language : Language) : List[Language] = {
+  def parentList[T <: { val next : T }](startItem : T, stopItem : T) : List[T] = {
     @tailrec
-    def languageListInternal(language : Language, list : List[Language]) : List[Language] = {
-      if (language == Root) {
-        list :+ Root
+    def parentListInternal(item : T, list : List[T]) : List[T] = {
+      if (item == stopItem) {
+        list :+ stopItem
       }
       else {
-        val parent = language.next
-        languageListInternal(parent, list :+ language)
+        val parent = item.next
+        parentListInternal(parent, list :+ item)
       }
     }
 
-    languageListInternal(language, Nil)
+    parentListInternal(startItem, Nil)
   }
 
-  def categoryList(exactCategory : Exact) : List[PluralCategory] = {
-    @tailrec
-    def categoryListInternal(category : PluralCategory, list : List[PluralCategory]) : List[PluralCategory] = {
-      if (category == Other) {
-        list :+ Other
-      }
-      else {
-        val parent = category.next
-        categoryListInternal(parent, list :+ category)
-      }
-    }
-
-    categoryListInternal(exactCategory, Nil)
-  }
-
-  def |[OtherLang <: Language](otherI18 : I18nString[OtherLang]) : I18nString[Lang with OtherLang] = {
+  def |[OtherLang <: Language](otherI18 : I18n[OtherLang]) : I18n[Lang with OtherLang] = {
     @tailrec
     def buildMap(list : List[(Language, Map[PluralCategory, String])], map : Map[Language, Map[PluralCategory, String]]) : Map[Language, Map[PluralCategory, String]] = {
       if (list.isEmpty) {
@@ -86,7 +72,7 @@ class I18nString[Lang <: Language] private[plural] (private val map : Map[Langua
       }
     }
 
-    new I18nString[Lang with OtherLang](buildMap(otherI18.map.iterator.toList, this.map))
+    new I18n[Lang with OtherLang](buildMap(otherI18.map.iterator.toList, this.map))
   }
 
   def languages : List[Language] = map.keys.toList
@@ -102,11 +88,20 @@ class I18nString[Lang <: Language] private[plural] (private val map : Map[Langua
   }
 }
 
-object I18nString {
-  def apply[L <: Language](language : L)(text : String) : I18nString[L] = apply(language, Other)(text)
+object I18n {
+  def apply[L <: Language](language : L)(text : String)(implicit contains : Selector[L#Categories, Other.type]) : I18n[L] = {
+    apply(language, Other)(text)
+  }
 
-  def apply[L <: Language, C >: L#Category <: PluralCategory](language : L, category : C)(text : String) : I18nString[L] = {
+  def apply[L <: Language, C <: PluralCategory](language : L, category : C)(text : String)(implicit contains : Selector[L#Categories, C]) : I18n[L] = {
+    category match {
+      case Exact(number) => create(language, language.category(number).asInstanceOf[C])(text)
+      case _             => create(language, category)(text)
+    }
+  }
+
+  private def create[L <: Language, C <: PluralCategory](language : L, category : C)(text : String) : I18n[L] = {
     val map : Map[Language, Map[PluralCategory, String]] = Map(language -> Map(category -> text))
-    new I18nString[L](map)
+    new I18n[L](map)
   }
 }

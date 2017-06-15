@@ -2,14 +2,14 @@ package ru.duester.i18n.plural.category
 
 sealed trait PluralCategory {
   val next : PluralCategory
-  override def toString : String = super.getClass.getSimpleName.toLowerCase()
+  override def toString : String = getClass.getSimpleName.toLowerCase()
 }
 
 trait DefaultNextCategory { self : PluralCategory =>
   val next : PluralCategory = Other
 }
 
-abstract case class Exact(val number : Double) extends PluralCategory {
+case class Exact(val number : Double) extends PluralCategory with DefaultNextCategory {
   override def toString : String = number.toString()
 }
 
