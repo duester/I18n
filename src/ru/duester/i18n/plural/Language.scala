@@ -1,10 +1,12 @@
 package ru.duester.i18n.plural
 
+import scala.annotation.implicitNotFound
+
 import ru.duester.i18n.plural.category._
-import shapeless._
 
 trait Language {
-  type Categories <: HList
+  @implicitNotFound("Category ${C} not acceptable for this language.")
+  trait AcceptableCategory[C <: PluralCategory]
 
   val next : Language
   final def category(number : Double) : Exact = categoryNonNeg(math.abs(number))
@@ -12,8 +14,9 @@ trait Language {
   override def toString() : String = getClass.getSimpleName.toLowerCase()
 }
 
-trait DefaultLanguageCategory {
-  type Categories = Other.type :: HNil
+trait DefaultLanguageCategory { self : Language =>
+  implicit object ExactC extends AcceptableCategory[Exact]
+  implicit object OtherC extends AcceptableCategory[Other.type]
 }
 
 trait DefaultLanguageParent { self : Language =>
@@ -23,7 +26,6 @@ trait DefaultLanguageParent { self : Language =>
 trait DefaultLanguageParameters extends DefaultLanguageCategory with DefaultLanguageParent { self : Language =>
 }
 
-case object Root extends Language with DefaultLanguageCategory {
-  val next : Language = Root
+case object Root extends Language with DefaultLanguageParameters {
   protected def categoryNonNeg(number : Double) : Exact = new Exact(number)
 }

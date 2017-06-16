@@ -3,24 +3,19 @@ package test
 import ru.duester.i18n.plural._
 import ru.duester.i18n.plural.cardinal._
 import ru.duester.i18n.plural.category._
-import shapeless._
-import shapeless.ops.hlist._
+import ru.duester.i18n.plural.StringInterpolators._
 
 object Test {
   def main(args : Array[String]) : Unit = {
     //val tpe = typeOf[Ru]
     //val m = tag.mirror
     //val cl = m.runtimeClass(tpe)
-    /*val i18n0 = I18nString(Root)("default")
-    val i18n1 = I18nString(Ru, Few)("ru_few: %1$s, and once more: %1$s, besides: %2$d")
-    val i18n2 = I18nString(Ru)(s"en_other $i18n0")
-    val i18n3 = i18n0 | i18n1 | i18n2
-    println(i18n3)
-    println(i18n3(En)(1))
-    println(i18n3(Ru)(3, i18n2, 18))*/
-    println(I18n(En, One)("test"))
-    println(I18n(En)("test2"))
-    val ru1 = I18n(Ru)("тест") | I18n(Ru, Exact(3.0))("тест2")
-    println(ru1)
+
+    val i18n = en"No files found."(Exact(0)) | en"Found %1$$s file."(One) | en"Found %1$$s files."(Other) | ru"Файлы не найдены."(Exact(0)) |
+      ru"Найден %1$$s файл."(One) | ru"Найдено %1$$s файла."(Few) | ru"Найдено %1$$s файлов."(Other)
+    println(i18n(Ru)(0, 0))
+    val i18nN = enN"This is my %1$$sst time."(One) | enN"This is my %1$$snd time."(Two) | enN"This is my %1$$srd time."(Few) | enN"This is my %1$$sth time."(Other) |
+      ruN"Это мой %1$$s-й раз"(Other) | ruN"Первый нах!"(Exact(1))
+    println(i18nN(ordinal.En)(21, 21))
   }
 }

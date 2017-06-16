@@ -4,7 +4,6 @@ import scala.annotation.tailrec
 
 import ru.duester.i18n.plural._
 import ru.duester.i18n.plural.category._
-import shapeless.ops.hlist._
 
 // map: Language => (PluralCategory => String)
 class I18n[Lang <: Language] private[plural] (private val map : Map[Language, Map[PluralCategory, String]]) {
@@ -17,7 +16,7 @@ class I18n[Lang <: Language] private[plural] (private val map : Map[Language, Ma
       case Some(baseString) =>
         val unpackedParametersOpt = parameters.map {
           case i18 : I18n[_] => i18.extract(language, exactCategory)
-          case p @ _               => Option(p)
+          case p @ _         => Option(p)
         }
         if (unpackedParametersOpt.contains(None)) {
           None
@@ -89,18 +88,17 @@ class I18n[Lang <: Language] private[plural] (private val map : Map[Language, Ma
 }
 
 object I18n {
-  def apply[L <: Language](language : L)(text : String)(implicit contains : Selector[L#Categories, Other.type]) : I18n[L] = {
-    apply(language, Other)(text)
-  }
-
-  def apply[L <: Language, C <: PluralCategory](language : L, category : C)(text : String)(implicit contains : Selector[L#Categories, C]) : I18n[L] = {
+  private[plural] def fromStringInterpolator[L <: Language, C <: PluralCategory : L#AcceptableCategory](sc : StringContext, args : Any*)(language : L, category : C) : I18n[L] = {
+    val strings = sc.parts.toList
+    val expressions = args.toList
+    val totalString = strings.head + expressions.zip(strings.tail).map(p => p._1.toString + p._2).mkString
     category match {
-      case Exact(number) => create(language, language.category(number).asInstanceOf[C])(text)
-      case _             => create(language, category)(text)
+      case Exact(number) => create(language, language.category(number).asInstanceOf[C])(totalString)
+      case _             => create(language, category)(totalString)
     }
   }
 
-  private def create[L <: Language, C <: PluralCategory](language : L, category : C)(text : String) : I18n[L] = {
+  private[plural] def create[L <: Language, C <: PluralCategory](language : L, category : C)(text : String) : I18n[L] = {
     val map : Map[Language, Map[PluralCategory, String]] = Map(language -> Map(category -> text))
     new I18n[L](map)
   }

@@ -2,10 +2,9 @@ package ru.duester.i18n.plural.cardinal
 
 import ru.duester.i18n.plural._
 import ru.duester.i18n.plural.category._
-import shapeless._
 
-case object En extends Language with DefaultLanguageParent {
-  type Categories = Exact :: One.type :: Other.type :: HNil
+case object En extends Language with DefaultLanguageParameters {
+  implicit object OneC extends AcceptableCategory[One.type]
 
   protected def categoryNonNeg(number : Double) : Exact = number match {
     case 1 => new Exact(number) {
@@ -15,8 +14,10 @@ case object En extends Language with DefaultLanguageParent {
   }
 }
 
-case object Ru extends Language with DefaultLanguageParent {
-  type Categories = Exact :: One.type :: Few.type :: Many.type :: Other.type :: HNil
+case object Ru extends Language with DefaultLanguageParameters {
+  implicit object OneC extends AcceptableCategory[One.type]
+  implicit object FewC extends AcceptableCategory[Few.type]
+  implicit object ManyC extends AcceptableCategory[Many.type]
 
   protected def categoryNonNeg(number : Double) : Exact = (number % 10) match {
     case 1 if number % 100 != 11 => new Exact(number) {

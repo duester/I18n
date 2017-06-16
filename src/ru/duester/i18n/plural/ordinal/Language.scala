@@ -2,12 +2,13 @@ package ru.duester.i18n.plural.ordinal
 
 import ru.duester.i18n.plural._
 import ru.duester.i18n.plural.category._
-import shapeless._
 
-case object En extends Language with DefaultLanguageParent {
-  type Categories = One.type :: Two.type :: Few.type :: Other.type :: HNil
+case object En extends Language with DefaultLanguageParameters {
+  implicit object OneC extends AcceptableCategory[One.type]
+  implicit object TwoC extends AcceptableCategory[Two.type]
+  implicit object FewC extends AcceptableCategory[Few.type]
 
-  protected def categoryNonNeg(number : Double) : Exact = (number.toInt % 10) match {
+  protected def categoryNonNeg(number : Double) : Exact = (number % 10) match {
     case 1 if number % 100 != 11 => new Exact(number) {
       override val next : PluralCategory = One
     }
